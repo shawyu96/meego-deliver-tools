@@ -27,6 +27,19 @@
 
 ## 快速开始
 
+### 一键启动（推荐）
+
+```bash
+chmod +x setup.sh
+./setup.sh           # 开发模式（默认）
+./setup.sh build     # 生产构建 + 启动
+```
+
+脚本会自动检查 Node.js 版本、安装依赖、创建 `.env` 和数据目录，然后启动服务。
+
+<details>
+<summary>手动操作（如需逐步控制）</summary>
+
 ### 1. 安装依赖
 
 ```bash
@@ -99,6 +112,8 @@ npm test              # 单次运行
 npm run test:watch    # 监听模式
 npm run typecheck     # 类型检查
 ```
+
+</details>
 
 ## 使用流程
 
