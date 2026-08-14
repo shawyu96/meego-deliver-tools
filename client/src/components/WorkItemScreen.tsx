@@ -159,9 +159,9 @@ export function WorkItemScreen({ onNext, onBack, initialState, onStateChange }: 
 
       <div className="btn-group" style={{ marginTop: 0 }}>
         {items.length === 0 && !showEmptyPager && (
-          <button className="btn btn-secondary btn-sm" onClick={onBack} disabled={searching || workflowLoad}>返回</button>
+          <button className="btn btn-secondary" onClick={onBack} disabled={searching || workflowLoad}>返回</button>
         )}
-        <button className="btn btn-primary btn-sm" onClick={() => handleSearch(1)} disabled={searching || workflowLoad || !selectedType}>
+        <button className="btn btn-primary" onClick={() => handleSearch(1)} disabled={searching || workflowLoad || !selectedType}>
           {searching ? '查询中...' : '查询'}
         </button>
       </div>
@@ -205,9 +205,9 @@ export function WorkItemScreen({ onNext, onBack, initialState, onStateChange }: 
               第 {page} 页 · 每页 {PAGE_SIZE} 条{hasMore ? '' : ' · 已到末页'}
             </span>
             <div className="btn-group" style={{ marginTop: 0 }}>
-              <button className="btn btn-sm btn-secondary" onClick={() => handleSearch(Math.max(1, page - 1))} disabled={searching || page <= 1}>上一页</button>
-              <button className="btn btn-sm btn-secondary" onClick={() => handleSearch(page + 1)} disabled={searching || !hasMore}>下一页</button>
-              <button className="btn btn-sm btn-secondary" onClick={onBack}>返回</button>
+              <button className="btn btn-secondary" onClick={() => handleSearch(Math.max(1, page - 1))} disabled={searching || page <= 1}>上一页</button>
+              <button className="btn btn-secondary" onClick={() => handleSearch(page + 1)} disabled={searching || !hasMore}>下一页</button>
+              <button className="btn btn-secondary" onClick={onBack}>返回</button>
             </div>
           </div>
         </div>
@@ -225,9 +225,9 @@ export function WorkItemScreen({ onNext, onBack, initialState, onStateChange }: 
             第 {page} 页 · 每页 {PAGE_SIZE} 条{hasMore ? '' : ' · 已到末页'}
           </span>
           <div className="btn-group" style={{ marginTop: 0 }}>
-            <button className="btn btn-sm btn-secondary" onClick={() => handleSearch(Math.max(1, page - 1))} disabled={searching || page <= 1}>上一页</button>
-            <button className="btn btn-sm btn-secondary" onClick={() => handleSearch(page + 1)} disabled={searching || !hasMore}>下一页</button>
-            <button className="btn btn-sm btn-secondary" onClick={onBack}>返回</button>
+            <button className="btn btn-secondary" onClick={() => handleSearch(Math.max(1, page - 1))} disabled={searching || page <= 1}>上一页</button>
+            <button className="btn btn-secondary" onClick={() => handleSearch(page + 1)} disabled={searching || !hasMore}>下一页</button>
+            <button className="btn btn-secondary" onClick={onBack}>返回</button>
           </div>
         </div>
       )}

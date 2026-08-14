@@ -32,7 +32,7 @@ export function SpaceSelector({ spaces, selected, onSelect, onRefresh, loading }
   return (
     <div className="space-selector" ref={ref}>
       <button
-        className="btn btn-secondary btn-sm space-trigger"
+        className="btn btn-secondary space-trigger"
         onClick={() => setOpen(!open)}
         disabled={loading}
       >
@@ -45,7 +45,7 @@ export function SpaceSelector({ spaces, selected, onSelect, onRefresh, loading }
         <div className="space-dropdown">
           <div className="space-dropdown-header">
             <span className="text-sm">选择空间</span>
-            <button className="btn btn-secondary btn-xs" onClick={() => { setOpen(false); onRefresh(); }}>
+            <button className="btn btn-secondary" onClick={() => { setOpen(false); onRefresh(); }}>
               刷新
             </button>
           </div>

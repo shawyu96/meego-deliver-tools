@@ -111,8 +111,8 @@ export function WorkflowScreen({ data, onNext, onBack }: Props) {
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#475569' }}>子任务（源）</div>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        <button className="btn btn-sm btn-secondary" onClick={() => { setSelectedSubtasks(subtasks.map((s: any) => s.id)); setSelectedSourceNode(node.state_key); }}>全选</button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => setSelectedSubtasks([])}>清空</button>
+                        <button className="btn btn-secondary" onClick={() => { setSelectedSubtasks(subtasks.map((s: any) => s.id)); setSelectedSourceNode(node.state_key); }}>全选</button>
+                        <button className="btn btn-secondary" onClick={() => setSelectedSubtasks([])}>清空</button>
                       </div>
                       <table style={{ marginTop: 6 }}>
                         <thead><tr><th style={{ width: 40 }}></th><th>ID</th><th>名称</th><th>负责人</th></tr></thead>

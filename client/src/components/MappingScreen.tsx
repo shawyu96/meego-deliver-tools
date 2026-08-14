@@ -239,8 +239,8 @@ export function MappingScreen({ data, onNext, onBack }: Props) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm btn-primary" onClick={() => addMapping()}>添加</button>
-          <button className="btn btn-sm btn-secondary" onClick={() => setMappings([])} disabled={!mappings.length}>清空</button>
+          <button className="btn btn-primary" onClick={() => addMapping()}>添加</button>
+          <button className="btn btn-secondary" onClick={() => setMappings([])} disabled={!mappings.length}>清空</button>
         </div>
       </div>
 
@@ -282,7 +282,7 @@ export function MappingScreen({ data, onNext, onBack }: Props) {
                     {!hasSourceMapping && m.fixed_value && (
                       <span className="tag" style={{ background: '#fefce8', color: '#a16207', fontSize: 10 }}>固定值</span>
                     )}
-                    <button className="btn btn-sm btn-danger" onClick={() => removeMapping(i)}>删除</button>
+                    <button className="btn btn-danger" onClick={() => removeMapping(i)}>删除</button>
                   </div>
                 </div>
                 <div className="mapping-card-body">

@@ -91,7 +91,7 @@ export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => vo
         <h2>全局配置</h2>
         {onBack && (
           <button
-            className="btn btn-secondary btn-sm config-back-btn"
+            className="btn btn-secondary config-back-btn"
             onClick={onBack}
             disabled={loading}
           >
