@@ -87,7 +87,18 @@ export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => vo
 
   return (
     <div className="card">
-      <h2>全局配置</h2>
+      <div className="config-header">
+        <h2>全局配置</h2>
+        {onBack && (
+          <button
+            className="btn btn-secondary btn-sm config-back-btn"
+            onClick={onBack}
+            disabled={loading}
+          >
+            返回
+          </button>
+        )}
+      </div>
       <p className="text-sm" style={{ marginBottom: 12 }}>
         这里统一保存飞书项目插件凭证。Secret 仅保存在当前浏览器会话中，关闭浏览器后需要重新填写。
       </p>
@@ -112,12 +123,11 @@ export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => vo
       {error && <div className="msg msg-error">{error}</div>}
 
       <div className="btn-group" style={{ marginTop: 16 }}>
-        {onBack && <button className="btn btn-secondary" onClick={onBack} disabled={loading}>返回首页</button>}
         <button className="btn btn-primary" onClick={handleSave} disabled={loading}>
-          {loading && <span className="spinner" />}
+        {loading && <span className="spinner" />}
           保存
-        </button>
-      </div>
+          </button>
+        </div>
 
       {/* ======================= 插件更新区域 ======================= */}
       <hr style={{ margin: '24px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
