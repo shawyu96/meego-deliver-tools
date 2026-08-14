@@ -7,6 +7,8 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import http from 'node:http';
+import { WebSocketServer } from 'ws';
 import { config } from './config.js';
 import { initDb } from './db/repositories.js';
 import authRoutes from './routes/auth.js';
@@ -14,6 +16,7 @@ import workitemRoutes from './routes/workitem.js';
 import copyRoutes from './routes/copy.js';
 import templateRoutes from './routes/templates.js';
 import systemRoutes from './routes/system.js';
+import { performUpdateWithStream } from './services/system-service.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -53,7 +56,40 @@ if (fs.existsSync(clientDir)) {
   });
 }
 
-app.listen(PORT, () => {
+// ======================== WebSocket Server（V2 弹窗终端方案） ========================
+const httpServer = http.createServer(app);
+const wsServer = new WebSocketServer({ server: httpServer, path: '/ws/update' });
+
+wsServer.on('connection', (ws, req) => {
+  // 从 URL query 读取 repo_url
+  const url = new URL(req.url || '', `http://localhost:${PORT}`);
+  const repoUrl = url.searchParams.get('repo_url') || undefined;
+
+  const projectRoot = path.resolve(__dirname, '..', '..', '..');
+
+  ws.send(JSON.stringify({ type: 'status', data: 'pulling' }));
+
+  performUpdateWithStream(projectRoot, repoUrl, (msg) => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify(msg));
+    }
+  })
+    .then(() => {
+      if (ws.readyState === ws.OPEN) {
+        ws.close();
+      }
+    })
+    .catch((err) => {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({ type: 'stderr', data: err.message }));
+        ws.send(JSON.stringify({ type: 'exit', data: 1 }));
+        ws.close();
+      }
+    });
+});
+
+// ======================== 启动服务 ========================
+httpServer.listen(PORT, () => {
   console.log(`\n  [server] 后端 API: http://localhost:${PORT}/api`);
   console.log(`  [server] 数据库: ${config.databaseUrl}`);
   if (fs.existsSync(clientDir)) {

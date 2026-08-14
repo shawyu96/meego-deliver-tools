@@ -5,7 +5,7 @@
 // 兜底路径：.git 不存在时 git init + remote add + fetch + checkout -f
 // =====================================================================
 
-import { execSync } from 'node:child_process';
+import { execSync, execFile, spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as https from 'node:https';
@@ -193,4 +193,202 @@ export function checkDependencies(): DependencyCheckResult {
 
   result.allOk = result.node.installed && result.git.installed;
   return result;
+}
+
+// =====================================================================
+// 仓库地址持久化：读写本地 .env 文件中的 REPO_URL
+// =====================================================================
+
+const ENV_PATH = path.join(PROJECT_ROOT, '.env');
+
+export function getRepoUrl(): string {
+  try {
+    if (!fs.existsSync(ENV_PATH)) return GITHUB_REMOTE_URL;
+    const content = fs.readFileSync(ENV_PATH, 'utf-8');
+    const match = content.match(/^REPO_URL=(.+)$/m);
+    return match ? match[1].trim() : GITHUB_REMOTE_URL;
+  } catch {
+    return GITHUB_REMOTE_URL;
+  }
+}
+
+export function saveRepoUrl(repoUrl: string): void {
+  let content = '';
+  if (fs.existsSync(ENV_PATH)) {
+    content = fs.readFileSync(ENV_PATH, 'utf-8');
+    if (/^REPO_URL=.+$/m.test(content)) {
+      content = content.replace(/^REPO_URL=.+$/m, `REPO_URL=${repoUrl}`);
+    } else {
+      content += `\nREPO_URL=${repoUrl}\n`;
+    }
+  } else {
+    content = `REPO_URL=${repoUrl}\n`;
+  }
+  fs.writeFileSync(ENV_PATH, content, 'utf-8');
+}
+
+// =====================================================================
+// 流式更新：performUpdateStream
+// 逐步执行 git/npm 命令，通过回调推送进度事件
+// =====================================================================
+
+export interface ProgressEvent {
+  step: string;
+  status: string;
+  message: string;
+  step_index: number;
+  total_steps: number;
+}
+
+export async function performUpdateStream(
+  projectRoot: string,
+  repoUrl: string | undefined,
+  onProgress: (event: ProgressEvent) => void,
+): Promise<void> {
+  const url = repoUrl || getRepoUrl();
+  const hasGit = fs.existsSync(path.join(projectRoot, '.git'));
+
+  // 定义步骤
+  const steps: { key: string; desc: string; cmd: string; args: string[] }[] = [];
+
+  if (hasGit) {
+    steps.push({ key: 'git-pull', desc: '拉取代码', cmd: 'git', args: ['pull', 'origin', 'main'] });
+  } else {
+    steps.push({ key: 'git-init', desc: '初始化 git', cmd: 'git', args: ['init'] });
+    steps.push({ key: 'git-remote', desc: '添加远程仓库', cmd: 'git', args: ['remote', 'add', 'origin', url] });
+    steps.push({ key: 'git-fetch', desc: '拉取远程代码', cmd: 'git', args: ['fetch', 'origin', 'main'] });
+    steps.push({ key: 'git-checkout', desc: '切换分支', cmd: 'git', args: ['checkout', '-f', '-t', 'origin/main'] });
+  }
+  steps.push({ key: 'npm-install', desc: '安装依赖', cmd: 'npm', args: ['install'] });
+
+  const totalSteps = steps.length;
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    const stepIndex = i + 1;
+
+    // 推送 running 状态
+    onProgress({
+      step: step.key,
+      status: 'running',
+      message: `${step.desc}中…`,
+      step_index: stepIndex,
+      total_steps: totalSteps,
+    });
+
+    try {
+      const output = await new Promise<string>((resolve, reject) => {
+        execFile(step.cmd, step.args, {
+          cwd: projectRoot,
+          encoding: 'utf-8',
+          timeout: 120000,
+          maxBuffer: 1024 * 1024,
+        }, (err, stdout, stderr) => {
+          if (err) {
+            reject(new Error(stderr || err.message));
+          } else {
+            resolve(stdout.trim());
+          }
+        });
+      });
+
+      onProgress({
+        step: step.key,
+        status: 'done',
+        message: output.slice(0, 200),
+        step_index: stepIndex,
+        total_steps: totalSteps,
+      });
+    } catch (err: any) {
+      onProgress({
+        step: step.key,
+        status: 'error',
+        message: err.message || String(err),
+        step_index: stepIndex,
+        total_steps: totalSteps,
+      });
+      throw err;
+    }
+  }
+
+  // 推送完成
+  onProgress({
+    step: 'complete',
+    status: 'done',
+    message: '更新完成，请重启插件',
+    step_index: totalSteps,
+    total_steps: totalSteps,
+  });
+}
+
+// =====================================================================
+// V2 弹窗终端方案：performUpdateWithStream
+// 用 spawn 执行命令，实时推送 stdout/stderr 原始输出（非结构化进度）
+// 适用于 WebSocket 场景，前端以终端风格逐行渲染
+// =====================================================================
+
+export interface StreamMessage {
+  type: 'stdout' | 'stderr' | 'exit' | 'status';
+  data: string | number;
+}
+
+export async function performUpdateWithStream(
+  projectRoot: string,
+  repoUrl: string | undefined,
+  onMessage: (msg: StreamMessage) => void,
+): Promise<void> {
+  const url = repoUrl || getRepoUrl();
+  const hasGit = fs.existsSync(path.join(projectRoot, '.git'));
+
+  // 定义命令序列
+  const commands: { cmd: string; args: string[]; status: string }[] = [];
+
+  if (hasGit) {
+    commands.push({ cmd: 'git', args: ['pull', 'origin', 'main'], status: 'pulling' });
+  } else {
+    commands.push({ cmd: 'git', args: ['init'], status: 'pulling' });
+    commands.push({ cmd: 'git', args: ['remote', 'add', 'origin', url], status: 'pulling' });
+    commands.push({ cmd: 'git', args: ['fetch', 'origin', 'main'], status: 'pulling' });
+    commands.push({ cmd: 'git', args: ['checkout', '-f', '-t', 'origin/main'], status: 'pulling' });
+  }
+  commands.push({ cmd: 'npm', args: ['install'], status: 'installing' });
+
+  for (const command of commands) {
+    onMessage({ type: 'status', data: command.status });
+
+    const exitCode = await new Promise<number>((resolve) => {
+      const child = spawn(command.cmd, command.args, {
+        cwd: projectRoot,
+        env: { ...process.env },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      child.stdout?.on('data', (chunk: Buffer) => {
+        const text = chunk.toString('utf-8');
+        if (text.trim()) onMessage({ type: 'stdout', data: text });
+      });
+
+      child.stderr?.on('data', (chunk: Buffer) => {
+        const text = chunk.toString('utf-8');
+        if (text.trim()) onMessage({ type: 'stderr', data: text });
+      });
+
+      child.on('error', (err) => {
+        onMessage({ type: 'stderr', data: err.message });
+        resolve(1);
+      });
+
+      child.on('close', (code) => {
+        resolve(code ?? 1);
+      });
+    });
+
+    if (exitCode !== 0) {
+      onMessage({ type: 'exit', data: exitCode });
+      return;
+    }
+  }
+
+  onMessage({ type: 'status', data: 'done' });
+  onMessage({ type: 'exit', data: 0 });
 }

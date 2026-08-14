@@ -12,7 +12,10 @@ import {
   getCurrentVersion,
   checkRemoteUpdate,
   performUpdate,
+  performUpdateStream,
   checkDependencies,
+  getRepoUrl,
+  saveRepoUrl as serviceSaveRepoUrl,
 } from '../services/system-service.js';
 
 const router = Router();
@@ -113,6 +116,67 @@ router.post('/update', async (_req, res) => {
     }
   } catch (err: any) {
     res.json({ ok: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// 仓库地址管理：GET/POST /api/system/repo-url
+// =====================================================================
+router.get('/repo-url', (_req, res) => {
+  try {
+    const repoUrl = getRepoUrl();
+    res.json({ ok: true, data: { repo_url: repoUrl } });
+  } catch (err: any) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
+router.post('/repo-url', (req, res) => {
+  try {
+    const repoUrl = req.body.repo_url;
+    if (!repoUrl || typeof repoUrl !== 'string') {
+      res.json({ ok: false, error: 'repo_url is required' });
+      return;
+    }
+    serviceSaveRepoUrl(repoUrl);
+    res.json({ ok: true, data: { ok: true } });
+  } catch (err: any) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// SSE 流式更新：POST /api/system/update-stream
+// 逐步执行 git pull / npm install，通过 SSE 推送进度
+// =====================================================================
+router.post('/update-stream', async (req, res) => {
+  // SSE 响应头
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  // 心跳保活
+  const heartbeat = setInterval(() => {
+    res.write(': heartbeat\n\n');
+  }, 15000);
+
+  // 客户端断开时清理
+  req.on('close', () => {
+    clearInterval(heartbeat);
+  });
+
+  const repoUrl = req.body.repo_url;
+
+  try {
+    await performUpdateStream(PROJECT_ROOT, repoUrl, (event) => {
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    });
+  } catch (err: any) {
+    res.write(`data: ${JSON.stringify({ step: 'complete', status: 'error', message: err.message })}\n\n`);
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
   }
 });
 

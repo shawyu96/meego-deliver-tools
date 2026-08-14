@@ -13,9 +13,8 @@ import { WorkItemScreen } from './components/WorkItemScreen';
 import { WorkflowScreen } from './components/WorkflowScreen';
 import { MappingScreen } from './components/MappingScreen';
 import { ExecuteScreen } from './components/ExecuteScreen';
-import { UpdateScreen } from './components/UpdateScreen';
 
-type Step = 'home' | 'config' | 'workitem' | 'workflow' | 'mapping' | 'execute' | 'update';
+type Step = 'home' | 'config' | 'workitem' | 'workflow' | 'mapping' | 'execute';
 
 export default function App() {
   const [step, setStep] = useState<Step>('home');
@@ -181,7 +180,7 @@ export default function App() {
         </div>
       )}
 
-      {step === 'home' && <HomeScreen onOpenCopyTool={openCopyTool} onOpenUpdate={() => goToStep('update')} />}
+      {step === 'home' && <HomeScreen onOpenCopyTool={openCopyTool} />}
       {step === 'config' && <ConfigScreen onNext={handleConfigDone} onBack={() => goToStep('home')} />}
       {step === 'workitem' && !needsSpace && (
         <WorkItemScreen
@@ -208,9 +207,6 @@ export default function App() {
           onBackToWorkflow={handleBackToWorkflow}
         />
       )}
-      {step === 'update' && (
-        <UpdateScreen onBack={() => goToStep('home')} />
-      )}
-    </div>
+      </div>
   );
 }

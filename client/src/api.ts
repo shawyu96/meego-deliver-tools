@@ -132,3 +132,48 @@ export function performUpdate() {
 export function getDependencies() {
   return api<{ node: { installed: boolean; version?: string }; git: { installed: boolean; version?: string }; allOk: boolean }>('/api/system/dependencies');
 }
+
+// ======================== 仓库地址 ========================
+
+export function getRepoUrl() {
+  return api<{ repo_url: string }>('/api/system/repo-url');
+}
+
+export function saveRepoUrl(repoUrl: string) {
+  return api<{ ok: boolean }>('/api/system/repo-url', { repo_url: repoUrl });
+}
+
+// ======================== 更新进度（WebSocket） ========================
+
+export interface WSMessage {
+  type: 'stdout' | 'stderr' | 'exit' | 'status';
+  data: string | number;
+}
+
+export function connectUpdateWebSocket(
+  repoUrl: string,
+  onMessage: (msg: WSMessage) => void,
+  onClose?: () => void,
+): WebSocket {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.hostname;
+  const port = window.location.port || '3001';
+  const wsUrl = `${protocol}//${host}:${port}/ws/update?repo_url=${encodeURIComponent(repoUrl)}`;
+
+  const ws = new WebSocket(wsUrl);
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data) as WSMessage;
+      onMessage(msg);
+    } catch {
+      // ignore parse errors
+    }
+  };
+
+  if (onClose) {
+    ws.onclose = () => onClose();
+  }
+
+  return ws;
+}
