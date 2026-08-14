@@ -13,6 +13,7 @@ import authRoutes from './routes/auth.js';
 import workitemRoutes from './routes/workitem.js';
 import copyRoutes from './routes/copy.js';
 import templateRoutes from './routes/templates.js';
+import systemRoutes from './routes/system.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workitem', workitemRoutes);
 app.use('/api/copy', copyRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/system', systemRoutes);
 
 // ======================== 静态文件托管 ========================
 // 生产构建后从 dist/client 托管；开发时由 Vite dev server (3000) 处理

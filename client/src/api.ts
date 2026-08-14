@@ -114,3 +114,21 @@ export function saveTemplate(data: { name: string; mode: string; source_type?: s
 export function deleteTemplate(id: number) {
   return fetch(`/api/templates/templates/${id}`, { method: 'DELETE' }).then(r => r.json());
 }
+
+// ======================== 系统/更新 ========================
+
+export function getVersion() {
+  return api<{ version: string }>('/api/system/version');
+}
+
+export function checkUpdate() {
+  return api<{ latest_version: string; has_update: boolean }>('/api/system/check-update');
+}
+
+export function performUpdate() {
+  return api<{ output: string }>('/api/system/update', {});
+}
+
+export function getDependencies() {
+  return api<{ node: { installed: boolean; version?: string }; git: { installed: boolean; version?: string }; allOk: boolean }>('/api/system/dependencies');
+}

@@ -99,6 +99,12 @@ if [ "$NODE_MAJOR" -lt 18 ]; then
 fi
 info "Node.js $(node -v)"
 
+# ---- 1b. 检查 git ----
+if ! command -v git &>/dev/null; then
+  fail "未检测到 git，请先安装 git：https://git-scm.com/downloads"
+fi
+info "git $(git --version)"
+
 # ---- 2. 安装依赖 ----
 step "安装依赖"
 if [ ! -d node_modules ]; then
