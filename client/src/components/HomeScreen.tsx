@@ -5,7 +5,7 @@
 import React from 'react';
 import { loadSaved } from '../storage';
 
-export function HomeScreen({ onOpenCopyTool }: { onOpenCopyTool: () => void }) {
+export function HomeScreen({ onOpenCopyTool, onOpenUpdate }: { onOpenCopyTool: () => void; onOpenUpdate: () => void }) {
   const saved = loadSaved();
   const hasConfig = Boolean(saved.plugin_id && saved.plugin_secret && saved.user_key);
 
@@ -27,6 +27,16 @@ export function HomeScreen({ onOpenCopyTool }: { onOpenCopyTool: () => void }) {
           <div className="tool-meta">
             <span className="tag tag-blue">字段映射</span>
             <span className="tag tag-green">批量执行</span>
+          </div>
+        </div>
+        <div className="tool-card" onClick={onOpenUpdate}>
+          <div className="tool-title">插件更新</div>
+          <div className="tool-desc">
+            从 GitHub 仓库拉取最新代码，实时显示更新进度。
+          </div>
+          <div className="tool-meta">
+            <span className="tag tag-blue">版本检查</span>
+            <span className="tag tag-green">实时进度</span>
           </div>
         </div>
       </div>

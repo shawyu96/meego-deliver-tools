@@ -2,9 +2,9 @@
 // 全局配置页面
 // =====================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { loadSaved, saveConfig } from '../storage';
-import { api, getVersion, checkUpdate, performUpdate } from '../api';
+import { api } from '../api';
 
 export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => void; onBack?: () => void }) {
   const saved = loadSaved();
@@ -14,50 +14,6 @@ export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => vo
   const [userKey, setUserKey] = useState(saved.user_key || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // ---- 更新功能 ----
-  const [currentVersion, setCurrentVersion] = useState('');
-  const [latestVersion, setLatestVersion] = useState('');
-  const [hasUpdate, setHasUpdate] = useState(false);
-  const [updateChecking, setUpdateChecking] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [updateMsg, setUpdateMsg] = useState('');
-
-  useEffect(() => {
-    getVersion().then(r => setCurrentVersion(r.version)).catch(() => {});
-  }, []);
-
-  async function handleCheckUpdate() {
-    setUpdateChecking(true);
-    setUpdateMsg('');
-    try {
-      const r = await checkUpdate();
-      setLatestVersion(r.latest_version || '未知');
-      setHasUpdate(r.has_update);
-      if (!r.has_update) {
-        setUpdateMsg('当前已是最新版本');
-      }
-    } catch (e: any) {
-      setUpdateMsg('检查更新失败: ' + (e.message || '未知错误'));
-    } finally {
-      setUpdateChecking(false);
-    }
-  }
-
-  async function handlePerformUpdate() {
-    setUpdating(true);
-    setUpdateMsg('正在更新，请稍候…');
-    try {
-      const r = await performUpdate();
-      setUpdateMsg('更新完成，请重启插件以应用最新代码。');
-      setCurrentVersion(latestVersion);
-      setHasUpdate(false);
-    } catch (e: any) {
-      setUpdateMsg('更新失败: ' + (e.message || '未知错误'));
-    } finally {
-      setUpdating(false);
-    }
-  }
 
   async function handleSave() {
     if (!baseUrl || !pluginId || !pluginSecret || !userKey) {
@@ -127,37 +83,6 @@ export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => vo
         <input value={userKey} onChange={e => setUserKey(e.target.value)} placeholder="用户 user_key" />
       </div>
       {error && <div className="msg msg-error">{error}</div>}
-
-      {/* ---- 更新区域 ---- */}
-      <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-color, #eee)' }}>
-        <h3 style={{ margin: '0 0 8px' }}>检查更新</h3>
-        <p className="text-sm" style={{ marginBottom: 10, color: 'var(--text-secondary, #888)' }}>
-          当前版本: <b>{currentVersion || '加载中…'}</b>
-          {latestVersion && <> ｜ 最新版本: <b>{latestVersion}</b></>}
-        </p>
-        <div className="btn-group" style={{ marginBottom: 8 }}>
-          <button className="btn btn-secondary" onClick={handleCheckUpdate} disabled={updateChecking || updating}>
-            {updateChecking && <span className="spinner" />}
-            检查更新
-          </button>
-          {hasUpdate && (
-            <button className="btn btn-primary" onClick={handlePerformUpdate} disabled={updateChecking || updating}>
-              {updating && <span className="spinner" />}
-              立即更新
-            </button>
-          )}
-        </div>
-        {updateMsg && (
-          <div className={`msg ${updateMsg.includes('失败') ? 'msg-error' : 'msg-info'}`} style={{ marginTop: 4 }}>
-            {updateMsg}
-          </div>
-        )}
-        {hasUpdate && (
-          <div className="msg msg-info" style={{ marginTop: 4 }}>
-            检测到新版本，点击「立即更新」将从 GitHub 拉取最新代码。本地配置（.env）和数据（data/）不受影响。
-          </div>
-        )}
-      </div>
 
       <div className="btn-group" style={{ marginTop: 16 }}>
         {onBack && <button className="btn btn-secondary" onClick={onBack} disabled={loading}>返回首页</button>}
