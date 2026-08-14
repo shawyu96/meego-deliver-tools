@@ -82,12 +82,11 @@ export function getRelations(params: {
 export function genMapping(params: {
   base_url?: string; plugin_id?: string; plugin_secret?: string;
   user_key?: string; space_key?: string; token_type?: number;
-  mode: 'A' | 'B' | 'C';
+  mode: 'A';
   source_work_item: { type: string; id: string };
   source_node_id?: string;
   source_item_ids?: number[];
   target_work_item: { type: string; id: string };
-  source_relation_id?: string;
   target_relation_id?: string;
   target_node_id?: string;
 }) {

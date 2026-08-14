@@ -68,62 +68,33 @@ async function getRelationWorkItemType(api: any, relationId: string, parentTypeK
 /** 生成字段映射模板 */
 router.post('/gen-mapping', async (req, res) => {
   try {
-    const { mode, source_work_item, source_node_id, source_item_ids, target_work_item, source_relation_id, target_relation_id, target_node_id } = req.body;
+    const { source_work_item, source_node_id, source_item_ids, target_work_item, target_relation_id } = req.body;
     const api = await createApiFromBody(req.body);
 
-    let sourceTypeKey = 'story';
+    const sourceTypeKey = 'sub_task';
     let targetTypeKey = '';
 
-    if (mode === 'A') {
-      sourceTypeKey = 'sub_task';
-      targetTypeKey = await getRelationWorkItemType(api, target_relation_id, target_work_item.type) || '';
+    targetTypeKey = await getRelationWorkItemType(api, target_relation_id, target_work_item.type) || '';
       const wf = await api.getWorkflow(target_work_item.type, target_work_item.id);
       const groups = wf.workflow_nodes.flatMap((n: any) => n.node_sub_workitem_detail);
       const targetGroup = groups.find((g: any) => g.relation_id === target_relation_id);
       if (!targetTypeKey && targetGroup?.workitems?.length) {
-        const sampleIds = targetGroup.workitems.slice(0, 12);
-        const details = await api.getWorkItemDetail(target_work_item.type, sampleIds);
+      const sampleIds = targetGroup.workitems.slice(0, 12);
+      const details = await api.getWorkItemDetail(target_work_item.type, sampleIds);
         const typeCounts: Record<string, number> = {};
         for (const d of details) {
-          const tk = d.work_item_type_key || d.type_key || 'issue';
-          typeCounts[tk] = (typeCounts[tk] || 0) + 1;
+        const tk = d.work_item_type_key || d.type_key || 'issue';
+        typeCounts[tk] = (typeCounts[tk] || 0) + 1;
+          }
+          targetTypeKey = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || targetTypeKey;
         }
-        targetTypeKey = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || targetTypeKey;
-      }
-      targetTypeKey = targetTypeKey || 'issue';
-    } else if (mode === 'C') {
-      sourceTypeKey = await getRelationWorkItemType(api, source_relation_id || target_relation_id, source_work_item.type) || '';
-      targetTypeKey = await getRelationWorkItemType(api, target_relation_id, target_work_item.type) || '';
-      if (!sourceTypeKey && source_item_ids?.length) {
-        const details = await api.getWorkItemDetail(source_work_item.type, source_item_ids.slice(0, 12));
-        const typeCounts: Record<string, number> = {};
-        for (const d of details) {
-          const tk = d.work_item_type_key || d.type_key || 'issue';
-          typeCounts[tk] = (typeCounts[tk] || 0) + 1;
-        }
-        sourceTypeKey = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'issue';
-      }
-      targetTypeKey = targetTypeKey || sourceTypeKey || 'issue';
-    } else {
-      targetTypeKey = 'sub_task';
-      sourceTypeKey = await getRelationWorkItemType(api, target_relation_id, source_work_item.type) || '';
-      if (!sourceTypeKey && source_item_ids?.length) {
-        const details = await api.getWorkItemDetail(source_work_item.type, source_item_ids.slice(0, 12));
-        const typeCounts: Record<string, number> = {};
-        for (const d of details) {
-          const tk = d.work_item_type_key || d.type_key || 'issue';
-          typeCounts[tk] = (typeCounts[tk] || 0) + 1;
-        }
-        sourceTypeKey = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'issue';
-      }
-      sourceTypeKey = sourceTypeKey || 'issue';
-    }
+        targetTypeKey = targetTypeKey || 'issue';
 
     // 源 meta
     let sourceMeta: any[] = [];
     let targetMeta: any[] = [];
 
-    if (mode === 'A') {
+    {
       const rawDetails = await api.getRawSubTaskDetails(source_work_item.type, source_work_item.id, source_node_id);
       const selectedIds = new Set((source_item_ids || []).map((id: any) => String(id)));
       const samples = rawDetails.filter((st: any) => selectedIds.has(String(st.builtin.id)));
@@ -202,21 +173,12 @@ router.post('/gen-mapping', async (req, res) => {
       sourceMeta = filterMetaForMapping(sourceMeta, sourceTypeKey);
       const targetMetaRaw = await api.getCreateMeta(targetTypeKey).catch(() => []);
       targetMeta = filterMetaForMapping(targetMetaRaw, targetTypeKey);
-    } else {
-      // B/C: 源 = field/all + 角色，目标 = create meta
-      const sourceMetaRaw = [
-        ...(await api.getAllFields(sourceTypeKey).catch(() => [])),
-        ...(await getRoleOwnerSourceMeta(api, sourceTypeKey)),
-      ];
-      sourceMeta = filterMetaForMapping(sourceMetaRaw, sourceTypeKey);
-      const targetMetaRaw = await api.getCreateMeta(targetTypeKey).catch(() => []);
-      targetMeta = filterMetaForMapping(targetMetaRaw, targetTypeKey);
     }
 
-    res.json({
-      ok: true,
-      data: {
-        mode, source_type_key: sourceTypeKey, target_type_key: targetTypeKey,
+      res.json({
+        ok: true,
+        data: {
+      mode: 'A', source_type_key: sourceTypeKey, target_type_key: targetTypeKey,
         source_meta: sourceMeta, target_meta: targetMeta,
         field_mappings: [],
       },
@@ -226,23 +188,7 @@ router.post('/gen-mapping', async (req, res) => {
   }
 });
 
-async function getRoleOwnerSourceMeta(api: any, typeKey: string): Promise<any[]> {
-  const createMeta = await api.getCreateMeta(typeKey).catch(() => []);
-  const roleField = createMeta.find((f: any) => f.field_key === 'role_owners' || f.field_type_key === 'role_owners');
-  const roles = Array.isArray(roleField?.role_assign) ? roleField.role_assign : [];
-  return roles.map((role: any) => {
-    const roleKey = String(role.role || '').trim();
-    if (!roleKey) return null;
-    return {
-      field_key: `role_owners:${roleKey}`, field_name: role.name || roleKey,
-      field_alias: role.name || roleKey, field_type_key: 'multi_user',
-      is_role_source: true, source_base_field: 'role_owners',
-      source_role: roleKey, source_role_name: role.name || roleKey,
-    };
-  }).filter(Boolean);
-}
-
-/** 执行复制（统一入口，按 config.mode 分发） */
+/** 执行复制（仅支持方向 A：子任务→子工作项） */
 router.post('/execute', async (req, res) => {
   try {
     const copyConfig = req.body as CopyConfig;

@@ -65,15 +65,14 @@ export function MappingScreen({ data, onNext, onBack }: Props) {
         const r = await genMapping({
           base_url: saved.base_url, plugin_id: saved.plugin_id, plugin_secret: saved.plugin_secret,
           user_key: saved.user_key, space_key: saved.space_key,
-          mode: data.mode,
+          mode: 'A',
           source_work_item: wi,
           source_node_id: data.selectedSourceNode || saved.source_node_id,
-          source_item_ids: data.mode === 'A' ? data.selectedSubtasks : data.selectedGroupItems,
+          source_item_ids: data.selectedSubtasks,
           target_work_item: wi,
-          source_relation_id: data.selectedGroup || saved.source_relation_id || '',
-          target_relation_id: data.mode === 'B' ? data.selectedGroup : data.selectedTargetGroup,
+          target_relation_id: data.selectedTargetGroup,
           target_node_id: data.selectedTargetNode || saved.target_node_id || '',
-        });
+          });
         const cfg = r as any;
         setSourceMeta(cfg.source_meta || []);
         setTargetMeta(expandTargetRoleFields(cfg.target_meta || []));
@@ -143,7 +142,7 @@ export function MappingScreen({ data, onNext, onBack }: Props) {
     setMappings(prev => prev.filter((_, i) => i !== idx));
   }
 
-  function templateScope() { return `${data.mode || ''}:${sourceTypeKey || ''}:${targetTypeKey || ''}`; }
+  function templateScope() { return `A:${sourceTypeKey || ''}:${targetTypeKey || ''}`; }
   function scopedTemplates() { const scope = templateScope(); return templates.filter(t => t.scope === scope); }
   function cloneMappings(rows: any[]) { return (rows || []).map(m => ({ ...m })); }
 
@@ -156,7 +155,7 @@ export function MappingScreen({ data, onNext, onBack }: Props) {
     const now = Date.now();
     const tpl = {
       id: selectedTemplateId || String(now), name, scope: templateScope(),
-      mode: data.mode, source_type_key: sourceTypeKey, target_type_key: targetTypeKey,
+      mode: 'A', source_type_key: sourceTypeKey, target_type_key: targetTypeKey,
       mappings: cloneMappings(valid), updated_at: now,
     };
     const next = [...templates.filter(t => t.id !== tpl.id), tpl].sort((a, b) => b.updated_at - a.updated_at);

@@ -17,7 +17,9 @@ label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 13px; c
 .app-title { font-size: 22px; font-weight: 700; }
 .app-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
 .header-actions { display: flex; align-items: center; gap: 10px; }
-.config-pill { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+.config-pill { font-size: 13px; height: 30px; padding: 0 10px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; }
+.config-pill.clickable { cursor: pointer; border: none; transition: all .15s; }
+.config-pill.clickable:hover { opacity: .85; transform: scale(1.02); }
 .config-pill.ok { background: #d1fae5; color: #065f46; }
 .config-pill.warn { background: #fef3c7; color: #92400e; }
 
@@ -120,6 +122,34 @@ tr.selected td { background: #eff6ff; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 input[type="checkbox"], input[type="radio"] { width: auto; margin-right: 6px; }
+
+/* ===== 空间选择器（右上角下拉） ===== */
+.space-selector { position: relative; display: inline-block; }
+.space-trigger { display: flex; align-items: center; gap: 6px; max-width: 220px; border-radius: 8px; }
+.space-trigger .space-icon { font-size: 14px; }
+.space-trigger .space-label-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+.space-trigger .space-caret { font-size: 10px; color: #64748b; }
+.space-dropdown {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 100;
+  min-width: 280px; max-width: 360px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08); max-height: 360px; overflow-y: auto;
+}
+.space-dropdown-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-bottom: 1px solid #f1f5f9;
+}
+.space-dropdown-empty { padding: 16px 12px; text-align: center; color: #94a3b8; font-size: 13px; }
+.space-dropdown-item {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  cursor: pointer; transition: background .12s; border-bottom: 1px solid #f8fafc;
+}
+.space-dropdown-item:hover { background: #f8fafc; }
+.space-dropdown-item.active { background: #eff6ff; }
+.space-dropdown-name { font-size: 13px; font-weight: 600; color: #1e293b; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.space-dropdown-simple { font-size: 11px; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+.space-check { color: #3b82f6; font-size: 14px; flex-shrink: 0; }
+.btn-xs { font-size: 11px; padding: 2px 8px; }
 
 /* ===== 空间列表 ===== */
 .space-item { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all .15s; }

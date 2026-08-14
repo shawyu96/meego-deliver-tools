@@ -23,21 +23,19 @@ export function ExecuteScreen({ data, onReset, onBackToWorkflow }: Props) {
       try {
         const wi = { type: saved.wi_type, id: saved.wi_id };
         const config = {
-          mode: data.mode,
+          mode: 'A',
           auth: { base_url: saved.base_url, plugin_id: saved.plugin_id, plugin_secret: saved.plugin_secret, user_key: saved.user_key, token_type: 0 },
           space_key: saved.space_key,
           source_work_item: wi,
           source_node_id: data.selectedSourceNode || saved.source_node_id,
-          source_item_ids: data.mode === 'A' ? data.selectedSubtasks : data.selectedGroupItems,
+          source_item_ids: data.selectedSubtasks,
           target_work_item: wi,
-          source_relation_id: data.selectedGroup || saved.source_relation_id || '',
-          target_relation_id: data.mode === 'B' ? data.selectedGroup : data.selectedTargetGroup,
+          target_relation_id: data.selectedTargetGroup,
           target_node_id: data.selectedTargetNode || saved.target_node_id || '',
           target_type_key: data.target_type_key || saved.target_type_key,
           field_mappings: data.field_mappings || [],
-          hierarchy_depth: data.hierarchyDepth || saved.hierarchy_depth || 1,
           concurrency: 1,
-        };
+          };
         const r = await executeCopy(config);
         setResult(r);
       } catch (e: any) {

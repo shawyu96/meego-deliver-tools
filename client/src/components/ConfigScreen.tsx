@@ -38,8 +38,24 @@ export function ConfigScreen({ onNext, onBack }: { onNext: (spaces: any[]) => vo
       return;
     }
     saveConfig({ base_url: baseUrl, plugin_id: pluginId, plugin_secret: pluginSecret, user_key: userKey, user_name: userName });
+
+    // 凭证保存成功后，立即拉取空间列表
+    let spaces: any[] = [];
+    try {
+      const initResp = await api<{ spaces: any[] }>('/api/auth/init', {
+        base_url: baseUrl,
+        plugin_id: pluginId,
+        plugin_secret: pluginSecret,
+        user_key: userKey,
+      });
+      spaces = initResp.spaces || [];
+      saveConfig({ spaces });
+    } catch (e: any) {
+      // 空间拉取失败不阻塞配置保存，用户可在右上角刷新
+      console.error('[ConfigScreen] 拉取空间失败:', e.message);
+    }
     setLoading(false);
-    onNext(loadSaved().spaces || []);
+    onNext(spaces);
   }
 
   return (

@@ -20,9 +20,9 @@ export function HomeScreen({ onOpenCopyTool }: { onOpenCopyTool: () => void }) {
       )}
       <div className="tool-grid">
         <div className="tool-card" onClick={onOpenCopyTool}>
-          <div className="tool-title">工作项复制</div>
+          <div className="tool-title">节点任务复制</div>
           <div className="tool-desc">
-            在同一个工作项内复制节点子任务、子工作项，或按子工作项层级递归复制。
+            在同一个工作项内将节点子任务复制为子工作项。
           </div>
           <div className="tool-meta">
             <span className="tag tag-blue">字段映射</span>

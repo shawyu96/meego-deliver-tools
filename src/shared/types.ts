@@ -3,7 +3,7 @@
 // =====================================================================
 
 /* ---------- 复制方向 ---------- */
-export type Direction = 'A' | 'B' | 'C';
+export type Direction = 'A';
 
 /* ---------- 工作流节点 ---------- */
 export interface WorkflowNode {
@@ -96,11 +96,9 @@ export interface CopyConfig {
   source_node_id: string;
   source_item_ids: number[];
   target_work_item: { type: string; id: string };
-  source_relation_id?: string;
   target_relation_id?: string;
   target_node_id?: string;
   target_type_key?: string;
-  hierarchy_depth?: number;
   field_mappings: FieldMapping[];
   concurrency: number;
 }
